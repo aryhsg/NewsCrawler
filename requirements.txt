@@ -1,0 +1,10 @@
+beautifulsoup4
+lxml
+requests
+pytz
+tzdata
+python-telegram-bot
+groq
+dotenv
+uvicorn
+fastapi
