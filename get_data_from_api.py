@@ -2,55 +2,19 @@ import requests
 import json
 import os
 
-cate = {
-        "要聞": "cate1_news.json",
-        "產業": "cate2_news.json",
-        "證券": "cate3_news.json",
-        "國際": "cate4_news.json",
-        "金融": "cate5_news.json",
-        "期貨": "cate6_news.json",
-        "理財": "cate7_news.json",
-        "房市": "cate8_news.json",
-        "專欄": "cate9_news.json",
-        "專題": "cate10_news.json",
-        "商情": "cate11_news.json",
-        "兩岸": "cate12_news.json"}
+def split_news_data(
+    input_file_name: str = "all_news_data"):
+        source_dict = {
+         "要聞": 0, "產業": 1, "證券": 2, "國際": 3, "金融": 4, "期貨": 5, "理財": 6, "房市": 7,
+         "專欄": 8, "專題": 9, "商情": 10, "兩岸":11
+}
 
+        with open("all_news_data", "r", encoding="utf-8") as f:
+                all_news_data = json.load(f)
 
-
-
-def get_data(category:str) -> json:
-    base_url = "http://127.0.0.1:8000"
-    endpoint = "/api/scrape-news/"
-    params = {"category": category}
-    api_url = f"{base_url}{endpoint}"
-
-    try:
-        response = requests.get(api_url, params=params)
-        if response.status_code == 200:
-            print("---API呼叫成功!!!---")
-            
-            data = response.json()
-
-            json.dump(data, open(full_path, "w", encoding="utf-8"), indent=4, ensure_ascii=False)
-            return(data)
-        else:
-            print(f"---API呼叫失敗...HTTP 狀態碼: {response.status_code}---")
-            error_data = response.json()
-            return(error_data)
-
-    except requests.RequestException as e:
-        print(f"網路連線錯誤或服務為啟動: {e}")
-
+                for i in range(12):
+                  json.dump(all_news_data["data"][i] , open(f"cate{i}_news.json", "w"), ensure_ascii=False)
 
 if __name__ == "__main__":
-    category_list = ["要聞", "產業", "證券", "國際", "金融", "期貨", "理財", "房市", "專欄", "專題", "商情", "兩岸"]
+        split_news_data("all_news_data")
 
-    output_path = "./category_news/"
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    for category in category_list:
-        filename = cate[category]
-        full_path = os.path.join(output_path, filename)
-        get_data(category)
