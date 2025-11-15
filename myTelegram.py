@@ -12,7 +12,11 @@ nest_asyncio.apply()
 CLIENT = Groq(api_key=os.environ.get("GROQ_API_KEY"))
 # 假設 NEWS 是一個大型的只讀字典，用於模擬數據庫
 # 必須確保 NEWS["data"]["content"] 和 NEWS["data"]["title"] 是列表
-NEWS = json.load(open("category_news.json", "r", encoding="utf-8")) 
+source_dict = {
+
+                "要聞": 0, "產業": 1, "證券": 2, "國際": 3, "金融": 4, "期貨": 5, "理財": 6, "房市": 7,
+                "專欄": 8, "專題": 9, "商情": 10, "兩岸":11
+}
 TOKEN = "7989231178:AAFaZQDPDk0bqPnAm4U8ti4CTBBG1yBujIU"
 #TOKEN = "8009192937:AAFh1IJNTsWkTmMht4s1CDiMBciAj_1HCCw" # 您的 Bot Token
 
@@ -34,7 +38,9 @@ def build_custom_keyboard() -> InlineKeyboardMarkup:
 def run_news_pipeline(category: str) -> list:
     """模擬數據獲取：返回新聞標題列表"""
     # 這裡假設您的 NEWS 結構是固定的，所有類別都共享同一個標題列表
-    return NEWS["data"]["title"]
+    with open(f"cate{source_list["category"]}_news.json", "r", encoding = "utf-8") as f:
+        news_list = f["title"]
+    return news_list
 
 def dynamic_keyboard_generation(inputlist: list) -> InlineKeyboardMarkup:
     """第二頁：生成新聞列表鍵盤"""
@@ -67,7 +73,7 @@ async def handle_button_press(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     # 【儲存狀態】: 儲存當前類別，供回退使用
     context.user_data["current_category"] = category 
-    
+    context.user_data["current_news_file"] = f"cate{source_list[category]}_news.json"
     news_list = run_news_pipeline(category=category)
     keyboard_markup = dynamic_keyboard_generation(news_list)
     
@@ -85,15 +91,15 @@ async def news_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     callback_data = query.data
     
     news_id = int(callback_data)
-    
+    news = context.user_data.get("current_news_file", 0)
     # 【儲存狀態】: 儲存新聞 ID 和摘要，供後續頁面使用
-    specific_content = NEWS["data"]["content"][news_id]
+    specific_content = news["content"][news_id]
     specific_summary = generate_summary(specific_content) # 執行 Groq 摘要
     
     context.user_data["selected_news_id"] = news_id
     context.user_data["selected_summary"] = specific_summary
 
-    specific_title = NEWS["data"]["title"][news_id]
+    specific_title = news["title"][news_id]
 
     keyboard = [
         [InlineKeyboardButton("查看全文", callback_data="full_article")],
@@ -114,12 +120,12 @@ async def full_article(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     
     # 【讀取狀態】: 從 user_data 讀取新聞 ID
     news_id = context.user_data.get("selected_news_id", None)
-    
+    news = context.user_data.get("current_news_file", 0)
     if news_id is None:
         await query.edit_message_text("錯誤：未找到新聞 ID，請重選新聞。")
         return
 
-    specific_content = NEWS["data"]["content"][news_id]
+    specific_content = news["content"][news_id]
     
     keyboard = [
         [InlineKeyboardButton("回上一頁", callback_data="back_to_3"), InlineKeyboardButton("結束", callback_data="end")], # 回到 Page 3
@@ -142,12 +148,12 @@ async def back_to_3(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # 【讀取狀態】: 讀取儲存的摘要資訊
     news_id = context.user_data.get("selected_news_id", None)
     summary = context.user_data.get("selected_summary", "摘要內容遺失。")
-    
+    news = context.user_data.get("current_news_file", 0)
     if news_id is None:
         await query.edit_message_text("錯誤：無法返回，缺少新聞數據。請重新 /start。")
         return
 
-    specific_title = NEWS["data"]["title"][news_id]
+    specific_title = news["title"][news_id]
 
     keyboard = [
         [InlineKeyboardButton("查看全文", callback_data="full_article")],
@@ -239,4 +245,5 @@ def main():
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
+
     main()
