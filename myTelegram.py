@@ -39,7 +39,7 @@ def build_custom_keyboard() -> InlineKeyboardMarkup:
 def run_news_pipeline(category: str) -> list:
     """模擬數據獲取：返回新聞標題列表"""
     # 這裡假設您的 NEWS 結構是固定的，所有類別都共享同一個標題列表
-    with open(f"cate{source_list["category"]}_news.json", "r", encoding = "utf-8") as f:
+    with open(f"cate{source_dict["category"]}_news.json", "r", encoding = "utf-8") as f:
         news_list = f["title"]
     return news_list
 
@@ -74,7 +74,7 @@ async def handle_button_press(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     # 【儲存狀態】: 儲存當前類別，供回退使用
     context.user_data["current_category"] = category 
-    context.user_data["current_news_file"] = f"cate{source_list[category]}_news.json"
+    context.user_data["current_news_file"] = f"cate{source_dict[category]}_news.json"
     news_list = run_news_pipeline(category=category)
     keyboard_markup = dynamic_keyboard_generation(news_list)
     
@@ -248,4 +248,5 @@ def main():
 if __name__ == "__main__":
     split_news_data("all_news_data")
     main()
+
 
