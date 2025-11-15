@@ -2,6 +2,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ContextTypes, CallbackQueryHandler, ConversationHandler
 from groq import Groq
 from groq_summary import generate_summary 
+from get_data_from_api import split_news_data
 import json
 import os
 import re
@@ -245,5 +246,6 @@ def main():
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
-
+    split_news_data("all_news_data")
     main()
+
