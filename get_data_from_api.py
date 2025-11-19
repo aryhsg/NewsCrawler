@@ -2,55 +2,41 @@ import requests
 import json
 import os
 
-cate = {
-        "要聞": "cate1_news.json",
-        "產業": "cate2_news.json",
-        "證券": "cate3_news.json",
-        "國際": "cate4_news.json",
-        "金融": "cate5_news.json",
-        "期貨": "cate6_news.json",
-        "理財": "cate7_news.json",
-        "房市": "cate8_news.json",
-        "專欄": "cate9_news.json",
-        "專題": "cate10_news.json",
-        "商情": "cate11_news.json",
-        "兩岸": "cate12_news.json"}
+SCRIPT_PATH = os.path.abspath(__file__)
+BASE_DIR = os.path.dirname(SCRIPT_PATH)
+all_news_data_path = os.path.join(BASE_DIR, "all_news_data")
+cate_news_dir = os.path.join(BASE_DIR, "cate_news")
 
 
-
-
-def get_data(category:str) -> json:
-    base_url = "http://127.0.0.1:8000"
-    endpoint = "/api/scrape-news/"
-    params = {"category": category}
-    api_url = f"{base_url}{endpoint}"
-
+def curl_api():
+    print("Fetching data from API...")
+    all_news_data = requests.get(
+        "http://aryhsgsnewsapi.onrender.com/api/scrape-all-news/"
+    ).json()
+    # 將獲取的數據寫入本地文件(json格式)
     try:
-        response = requests.get(api_url, params=params)
-        if response.status_code == 200:
-            print("---API呼叫成功!!!---")
-            
-            data = response.json()
+        with open(all_news_data_path, "w", encoding="utf-8") as f:
+            json.dump(all_news_data, f, ensure_ascii=False, indent=4)
+        print("Data successfully written to all_news_data")
+    except Exception as e:
+        print(f"Error writing to file: {e}")
 
-            json.dump(data, open(full_path, "w", encoding="utf-8"), indent=4, ensure_ascii=False)
-            return(data)
-        else:
-            print(f"---API呼叫失敗...HTTP 狀態碼: {response.status_code}---")
-            error_data = response.json()
-            return(error_data)
 
-    except requests.RequestException as e:
-        print(f"網路連線錯誤或服務為啟動: {e}")
+def split_news_data(all_news_data_path):
+    os.makedirs(cate_news_dir, exist_ok=True)
+    with open(all_news_data_path, "r", encoding="utf-8") as f:
+        all_news_data = json.load(f)
+
+        for i in range(12):
+            cate_news_path = os.path.join(cate_news_dir, f"cate{i}_news.json")
+            json.dump(
+                all_news_data["data"][i],
+                open(cate_news_path, "w", encoding="utf-8"),
+                ensure_ascii=False,
+            )
+        print("News data successfully split into categories.")
 
 
 if __name__ == "__main__":
-    category_list = ["要聞", "產業", "證券", "國際", "金融", "期貨", "理財", "房市", "專欄", "專題", "商情", "兩岸"]
-
-    output_path = "./category_news/"
-    if not os.path.exists(output_path):
-        os.makedirs(output_path)
-
-    for category in category_list:
-        filename = cate[category]
-        full_path = os.path.join(output_path, filename)
-        get_data(category)
+    curl_api()
+    split_news_data(all_news_data_path)

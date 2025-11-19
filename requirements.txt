@@ -8,3 +8,4 @@ groq
 dotenv
 uvicorn
 fastapi
+nest_asyncio
